@@ -1,0 +1,152 @@
+# 1st implementation: 2 Columns Dataset 
+# Register the paths 
+
+Sys.setenv(HADOOP_HOME="/usr/lib/hadoop-0.20-mapreduce")
+Sys.setenv(HADOOP_CMD="/usr/bin/hadoop")
+Sys.setenv(HADOOP_STREAMING="/usr/lib/hadoop-0.20-mapreduce/contrib/streaming/hadoop-streaming-2.0.0-mr1-cdh4.7.1.jar")
+Sys.setenv(JAVA_HOME="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.35.x86_64")
+
+# Load libraries for map-reduce
+
+library(rmr2)
+library(rJava)
+library(rhdfs)
+hdfs.init()
+
+# Create random dataset with 2000 points
+
+x1 = sample.int(2000, 2000)
+y1 = sample.int(2000, 2000)
+	
+# Choose datasets		
+
+Dataset.1 = data.frame(x1,y1)
+
+# Move Dataset to DFS
+
+Dataset.points <- to.dfs(Dataset.1)
+
+ # Start count time
+
+ptm <- proc.time()
+
+# Map-Reduce ordering
+
+data.ordering = from.dfs(
+    mapreduce(
+        input = Dataset.points, 
+        map = function(k, v) keyval(v, 1), 
+        
+	reduce = 
+            function(k, v) 
+                keyval(k, order(v))))
+# Import data.ordering into a new dataset
+
+Skyline.points <- to.dfs(data.ordering$key)    	  
+
+# Find skylines with Map-Reduce
+
+find.skylines = from.dfs(
+    mapreduce(
+        input = Skyline.points,
+        map = function(k, v)  
+            
+        {
+            nondom <- v[which(!duplicated(cummin(v$y))), ]
+            
+            keyval(k, nondom )}))
+
+# End count time
+
+proc.time() - ptm
+
+# Appear the skyline results
+
+nondominated <- find.skylines$val
+nondominated
+
+# Make 2D plot for x1,y1
+
+plot(Dataset.1[,1:2], xlim=c(0,2000), ylim=c(0,2000))
+plot(nondominated[,1:2], xlim=c(0,2000), ylim=c(0,2000))
+
+
+10.4.2 2nd implementation: 4 Columns Dataset 
+# Register the paths 
+
+Sys.setenv(HADOOP_HOME="/usr/lib/hadoop-0.20-mapreduce")
+Sys.setenv(HADOOP_CMD="/usr/bin/hadoop")
+Sys.setenv(HADOOP_STREAMING="/usr/lib/hadoop-0.20-mapreduce/contrib/streaming/hadoop-streaming-2.0.0-mr1-cdh4.7.1.jar")
+Sys.setenv(JAVA_HOME="/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.35.x86_64")
+
+# Load libraries for map-reduce
+
+library(rmr2)
+library(rJava)
+library(rhdfs)
+hdfs.init()
+
+
+
+
+
+# Create random dataset with 2000 points
+
+x1 = sample.int(2000, 2000)
+y1 = sample.int(2000, 2000)
+
+x2 = sample.int(2000, 2000)
+y2 = sample.int(2000, 2000)
+	
+# Choose datasets		
+
+Dataset.2 = data.frame(x1,y1,x2,y2)
+
+# Move Dataset to DFS
+
+Dataset.points <- to.dfs(Dataset.2)
+
+ # Start count time
+
+ptm <- proc.time()
+
+# Map-Reduce ordering
+
+data.ordering = from.dfs(
+    mapreduce(
+        input = Dataset.points, 
+        map = function(k, v) keyval(v, 1), 
+        
+	reduce = 
+            function(k, v) 
+                keyval(k, order(v))))
+
+# Import data.ordering into a new dataset
+
+Skyline.points <- to.dfs(data.ordering$key)    	  
+
+# Find skylines with Map-Reduce
+
+find.skylines = from.dfs(
+    mapreduce(
+        input = Skyline.points,
+        map = function(k, v)  
+            
+        {
+            nondom <- v[which(!duplicated(cummin(v$y))), ]
+            
+            keyval(k, nondom )}))
+
+# End count time
+
+proc.time() - ptm
+
+# Appear the skyline results
+
+nondominated <- find.skylines$val
+nondominated
+
+# Make 2D plot for x1,y1,x2,y2
+
+plot(Dataset.2[,1:4], xlim=c(0,2000), ylim=c(0,2000))
+plot(nondominated[,1:4], xlim=c(0,2000), ylim=c(0,2000))
